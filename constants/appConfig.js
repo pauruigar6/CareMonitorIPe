@@ -1,3 +1,4 @@
+// appConfig.js
 import { Dimensions } from 'react-native';
 const { height, width } = Dimensions.get('window');
 
@@ -16,6 +17,7 @@ export const COLORS = {
   primary: '#7C9A92',
   white: "#FFFFFF",
   background: "#F4F4F4",
+  modal: "#E9E9E9",
   gray: "#BEC2C2",
   darkolivegreen: "#556b2f",
   black: "#000000"

@@ -2,6 +2,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { AudioProvider } from './utils/AudioContext'
 
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
@@ -14,9 +15,10 @@ import SettingsScreen from "./screens/SettingsScreen";
 
 const Stack = createStackNavigator();
 
-export default function App() {
+const App = () => {
   return (
-    <NavigationContainer>
+    <AudioProvider>
+     <NavigationContainer>
       <Stack.Navigator initialRouteName="Welcome">
         <Stack.Screen
           name="Welcome"
@@ -60,5 +62,8 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AudioProvider>
   );
-}
+};
+
+export default App;

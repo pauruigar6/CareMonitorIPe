@@ -42,7 +42,6 @@ const Input = (props) => {
     } else if (props.id === 'password') {
       return props.value.length >= 6;
     } else if (props.id === 'confirmPassword') {
-      // Validar si los dos campos coinciden y no están vacíos
       return props.value === props.passwordValue && props.value.length > 0;
     }
     return true;
@@ -106,7 +105,6 @@ const SignupScreen = ({ navigation }) => {
   };
 
   const handleCreateAccount = () => {
-    // Verifica si algún campo está vacío
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
@@ -162,7 +160,6 @@ const SignupScreen = ({ navigation }) => {
           Start your wellness voyage.
         </Text>
 
-        {/* Input fields */}
         <Input
           id="name"
           placeholder="Name"
@@ -216,7 +213,6 @@ const SignupScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Link to go to the login screen */}
         <SafeAreaView style={{ marginTop: 72 }}>
         <WhiteButton
             title="Sign Up"

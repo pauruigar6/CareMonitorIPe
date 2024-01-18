@@ -1,5 +1,5 @@
 // ProfileScreen.js
-import React from "react";
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -7,67 +7,60 @@ import {
   TouchableOpacity,
   StyleSheet,
   View,
-} from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
-import appConfig from "../constants/appConfig";
-import { Audio } from "expo-av";
+} from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
+import appConfig from '../constants/appConfig';
+import { Audio } from 'expo-av';
+import { useAudio } from '../utils/AudioContext';
 
 const HealthProfileScreen = () => {
-  const handleUploadAudio = () => {
-    const [recording, setRecording] = React.useState();
-    const [recordings, setRecordings] = React.useState([]);
+  const { dispatch } = useAudio();
+  const [recording, setRecording] = useState();
+  const [recordings, setRecordings] = useState([]);
 
-    async function startRecording() {
-      try {
-        const perm = await Audio.requestPermissionsAsync();
-        if (perm.status === "granted") {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true
-          });
-          const { recording } = await Audio.Recording.createAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
-          setRecording(recording);
-        }
-      } catch (err) {}
-    }
+  useEffect(() => {
+    return () => {
+      stopRecording(); 
+    };
+  }, []);
 
-    async function stopRecording() {
+  const startRecording = async () => {
+    try {
+      const perm = await Audio.requestPermissionsAsync();
+      if (perm.status === 'granted') {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+        const { recording } = await Audio.Recording.createAsync(
+          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+        );
+        setRecording(recording);
+      }
+    } catch (err) {}
+  };
+
+  const stopRecording = async () => {
+    if (recording) {
       setRecording(undefined);
-  
       await recording.stopAndUnloadAsync();
-      let allRecordings = [...recordings];
       const { sound, status } = await recording.createNewLoadedSoundAsync();
-      allRecordings.push({
+      const newRecording = {
         sound: sound,
         duration: getDurationFormatted(status.durationMillis),
-        file: recording.getURI()
-      });
-  
-      setRecordings(allRecordings);
+        file: recording.getURI(),
+      };
+      dispatch({ type: 'ADD_RECORDING', payload: newRecording });
+      setRecordings([...recordings, newRecording]);
     }
+  };
 
-    function getDurationFormatted(milliseconds) {
-      const minutes = milliseconds / 1000 / 60;
-      const seconds = Math.round((minutes - Math.floor(minutes)) * 60);
-      return seconds < 10 ? `${Math.floor(minutes)}:0${seconds}` : `${Math.floor(minutes)}:${seconds}`
-    }
-  
-    function getRecordingLines() {
-      return recordings.map((recordingLine, index) => {
-        return (
-          <View key={index} style={styles.row}>
-            <Text style={styles.fill}>
-              Recording #{index + 1} | {recordingLine.duration}
-            </Text>
-            <Button onPress={() => recordingLine.sound.replayAsync()} title="Play"></Button>
-          </View>
-        );
-      });
-    }
-  
-    function clearRecordings() {
-      setRecordings([])
-    }  
+  const getDurationFormatted = (milliseconds) => {
+    const minutes = milliseconds / 1000 / 60;
+    const seconds = Math.round((minutes - Math.floor(minutes)) * 60);
+    return seconds < 10
+      ? `${Math.floor(minutes)}:0${seconds}`
+      : `${Math.floor(minutes)}:${seconds}`;
   };
 
   return (
@@ -86,10 +79,15 @@ const HealthProfileScreen = () => {
           <View style={styles.btn}>
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={handleUploadAudio}
+              onPress={recording ? stopRecording : startRecording}
             >
-              <FontAwesome5 name="microphone" style={styles.uploadIcon} />
-              <Text style={styles.uploadText}>Upload Audio</Text>
+              <FontAwesome5
+                name={recording ? 'stop' : 'microphone'}
+                style={styles.uploadIcon}
+              />
+              <Text style={styles.uploadText}>
+                {recording ? 'Stop Recording' : 'Start Recording'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -115,12 +113,12 @@ const styles = StyleSheet.create({
   btn: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 120,
+    marginTop: 125,
   },
   uploadButton: {
     width: 200,
     height: 200,
-    borderRadius: 100, // Forma circular
+    borderRadius: 100, 
     backgroundColor: appConfig.COLORS.primary,
     justifyContent: "center",
     alignItems: "center",

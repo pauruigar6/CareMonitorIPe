@@ -1,3 +1,4 @@
+// WhiteButton.js
 import {
     Text,
     TouchableOpacity,

@@ -62,14 +62,12 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    // Verificar si algún campo está vacío
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
-      // Iniciar sesión con Firebase
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -78,7 +76,6 @@ const LoginScreen = ({ navigation }) => {
       const user = userCredential.user;
       console.log("Login successful:", user.uid);
 
-      // Puedes navegar a la siguiente pantalla u realizar otras acciones aquí
       navigation.navigate("HomeScreen");
     } catch (error) {
       if (error.code === "auth/user-not-found") {
@@ -121,7 +118,6 @@ const LoginScreen = ({ navigation }) => {
           Seamless access to your health journey.
         </Text>
 
-        {/* Input fields */}
         <Input
           id="email"
           placeholder="Email Address"
@@ -149,7 +145,6 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Link to go to the signup screen */}
         <SafeAreaView style={{ marginTop: 72 }}>
           <WhiteButton
             title="Log In"

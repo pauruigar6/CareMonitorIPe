@@ -1,22 +1,71 @@
 // ResultsScreen.js
-import React from "react";
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  SafeAreaView,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TextInput,
+} from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import appConfig, { COLORS, SIZES } from "../constants/appConfig";
+import appConfig from "../constants/appConfig";
+import { useAudio } from "../utils/AudioContext";
+import { Audio } from "expo-av";
 
 const ResultsScreen = () => {
-  // Simulación de datos de grabaciones
-  const recordingsData = [
-    { title: "Recording 1", duration: "2:30" },
-    { title: "Recording 2", duration: "1:45" },
-    { title: "Recording 3", duration: "3:15" },
-    // Agrega más grabaciones según sea necesario
-  ];
+  const { state, dispatch } = useAudio();
+  const [sound, setSound] = useState();
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [isOptionsModalVisible, setOptionsModalVisible] = useState(false);
 
-  const handlePlayRecording = (title) => {
-    // Lógica para reproducir la grabación según el título
-    console.log(`Playing recording: ${title}`);
-    // Puedes agregar aquí la lógica necesaria para reproducir la grabación
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
+
+  const handlePlayRecording = async (title, file) => {
+    try {
+      if (sound) {
+        await sound.unloadAsync();
+      }
+
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: file },
+        { shouldPlay: true }
+      );
+      setSound(newSound);
+    } catch (error) {
+      console.error("Error al reproducir el audio", error);
+    }
+  };
+
+  const handleCardPress = (index) => {
+    setExpandedIndex((prevIndex) => (prevIndex === index ? null : index));
+  };
+
+  const showOptionsModal = () => {
+    setOptionsModalVisible(true);
+  };
+
+  const hideOptionsModal = () => {
+    setOptionsModalVisible(false);
+  };
+
+
+  const handleDeleteRecording = () => {
+    dispatch({ type: "DELETE_RECORDING", payload: expandedIndex });
+    hideOptionsModal();
+  };
+
+  const handleClearRecordings = () => {
+    dispatch({ type: "CLEAR_RECORDINGS" });
+    setExpandedIndex(null);
   };
 
   return (
@@ -25,20 +74,77 @@ const ResultsScreen = () => {
         <Text style={{ ...appConfig.FONTS.h1, color: appConfig.COLORS.black }}>
           Results
         </Text>
-        {recordingsData.map((recording, index) => (
-          <View key={index} style={styles.card}>
-            <View style={styles.recordingInfo}>
-              <Text style={styles.label}>{recording.title}</Text>
-              <Text style={styles.value}>Duration: {recording.duration}</Text>
+        {state.recordings.map((recording, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => handleCardPress(index)}
+          >
+            <View style={styles.cardHeader}>
+              <Text style={styles.label}>{`Recording ${index + 1}`}</Text>
               <TouchableOpacity
-                style={styles.playButton}
-                onPress={() => handlePlayRecording(recording.title)}
+                onPress={showOptionsModal}
+                style={styles.optionsButton}
               >
-                <FontAwesome5 name="play" style={styles.playIcon} />
+                <FontAwesome5 name="ellipsis-h" style={styles.optionsIcon} />
               </TouchableOpacity>
             </View>
-          </View>
+            <View style={styles.row}>
+              <Text style={styles.durationText}>{recording.duration}</Text>
+            </View>
+            {expandedIndex === index && (
+              <View style={styles.expandedContent}>
+                <TouchableOpacity
+                  style={styles.playButton}
+                  onPress={() =>
+                    handlePlayRecording(
+                      `Recording ${index + 1}`,
+                      recording.file
+                    )
+                  }
+                >
+                  <FontAwesome5 name="play" style={styles.playIcon} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </TouchableOpacity>
         ))}
+        {state.recordings.length > 0 && (
+          <TouchableOpacity
+            onPress={handleClearRecordings}
+            style={styles.clearButton}
+          >
+            <Text style={styles.clearButtonText}>Clear Recordings</Text>
+          </TouchableOpacity>
+        )}
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isOptionsModalVisible}
+          onRequestClose={hideOptionsModal}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.optionsModal}>
+              <TouchableOpacity
+                onPress={() => {
+                  hideOptionsModal();
+                }}
+                style={styles.closeModalButton}
+              >
+                <FontAwesome5 name="times" style={styles.closeModalIcon} />
+              </TouchableOpacity>
+              <View style={styles.modalCard}>
+                <TouchableOpacity
+                  onPress={handleDeleteRecording}
+                  style={styles.optionButton}
+                >
+                  <Text style={{ color: "red" }}>Delete Audio</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -53,42 +159,110 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: appConfig.COLORS.white,
     borderRadius: 10,
     marginTop: 16,
     padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
   },
-  recordingInfo: {
-    marginLeft: 10,
-    flex: 1,
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 4,
   },
-  value: {
-    fontSize: 18,
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  icon: {
+  durationText: {
     fontSize: 16,
-    color: appConfig.COLORS.primary,
-    marginBottom: 10,
+    color: appConfig.COLORS.gray,
   },
   playButton: {
-    width: 40,
-    height: 40,
+    width: 35,
+    height: 35,
+    borderWidth: 1.5,
+    borderColor: appConfig.COLORS.primary,
     borderRadius: 20,
-    backgroundColor: appConfig.COLORS.primary,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 10,
   },
   playIcon: {
+    fontSize: 15,
+    padding: 5,
+    color: appConfig.COLORS.primary,
+  },
+  clearButton: {
+    backgroundColor: appConfig.COLORS.primary,
+    borderRadius: 8,
+    padding: 10,
+    alignSelf: "center",
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  clearButtonText: {
+    color: appConfig.COLORS.white,
+    fontSize: 16,
+  },
+  expandedContent: {
+    alignItems: "center",
+  },
+  optionsButton: {
+    padding: 6,
+    backgroundColor: appConfig.COLORS.modal,
+    borderRadius: 20,
+    width: 25,
+    height: 25,
+  },
+  optionsIcon: {
     fontSize: 20,
-    color: "#FFF",
+    color: appConfig.COLORS.black,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  optionsModal: {
+    backgroundColor: appConfig.COLORS.modal,
+    padding: 16,
+    width: appConfig.SIZES.width,
+    flex: 1,
+    marginTop: 660,
+    justifyContent: "flex-end", 
+  },
+  modalCard: {
+    backgroundColor: appConfig.COLORS.white,
+    borderRadius: 10,
+    marginBottom: 14,
+    padding: 16,
+  },
+  closeModalButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    padding: 10,
+  },
+  closeModalIcon: {
+    fontSize: 15,
+    color: appConfig.COLORS.black,
+  },
+  optionButton: {
+    marginTop: 16,
+  },
+  optionsIcon: {
+    fontSize: 12,
+    color: appConfig.COLORS.black,
+  },
+  timestampText: {
+    fontSize: 16,
+    color: appConfig.COLORS.gray,
   },
 });
 

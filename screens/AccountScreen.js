@@ -1,4 +1,3 @@
-
 // AccountScreen.js
 import React from "react";
 import { View, Text, ScrollView, SafeAreaView, StyleSheet } from "react-native";
@@ -57,8 +56,8 @@ const AccountScreen = () => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF", // Fondo blanco
-    borderRadius: 10, // Esquinas redondeadas
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
     marginTop: 16,
     padding: 16,
   },
