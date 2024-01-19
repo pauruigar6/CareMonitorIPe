@@ -15,13 +15,8 @@ import appConfig from "../constants/appConfig";
 import { FontAwesome5 } from "@expo/vector-icons";
 import WhiteButton from "../components/WhiteButton";
 
-import {
-  auth,
-  createUserWithEmailAndPassword,
-  db,
-} from "../utils/firebase-config";
-import { collection, addDoc } from 'firebase/firestore'; // Añade los imports necesarios para Firestore
-
+import { auth, createUserWithEmailAndPassword, db } from '../utils/firebase-config'
+import { doc, setDoc } from 'firebase/firestore';
 
 const images = {
   logo: require("../assets/logo.png"),
@@ -43,11 +38,11 @@ const Input = (props) => {
   };
 
   const isValid = () => {
-    if (props.id === "email") {
+    if (props.id === 'email') {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(props.value);
-    } else if (props.id === "password") {
+    } else if (props.id === 'password') {
       return props.value.length >= 6;
-    } else if (props.id === "confirmPassword") {
+    } else if (props.id === 'confirmPassword') {
       return props.value === props.passwordValue && props.value.length > 0;
     }
     return true;
@@ -59,8 +54,7 @@ const Input = (props) => {
         style={[
           styles.inputContainer,
           {
-            borderColor:
-              isFocused && !isValid() ? "red" : appConfig.COLORS.gray,
+            borderColor: isFocused && !isValid() ? 'red' : appConfig.COLORS.gray,
           },
         ]}
       >
@@ -74,20 +68,20 @@ const Input = (props) => {
           placeholderTextColor={
             props.placeholderTextColor || appConfig.COLORS.gray
           }
-          autoCapitalize={props.autoCapitalize || "none"}
+          autoCapitalize={props.autoCapitalize || 'none'}
           secureTextEntry={props.secureTextEntry || false}
         />
       </View>
       {isFocused && !isValid() && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-            {props.id === "email"
-              ? "Invalid email address"
-              : props.id === "password"
-              ? "Password must be at least 6 characters"
-              : props.id === "confirmPassword"
-              ? "Passwords do not match"
-              : ""}
+            {props.id === 'email'
+              ? 'Invalid email address'
+              : props.id === 'password'
+                ? 'Password must be at least 6 characters'
+                : props.id === 'confirmPassword'
+                  ? 'Passwords do not match'
+                  : ''}
           </Text>
         </View>
       )}
@@ -111,49 +105,38 @@ const SignupScreen = ({ navigation }) => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        // Añadir información a Firestore
-        const userInfo = {
-          name: name,
-          email: email,
-        };
-
-        console.log("userInfo", userInfo);
-
-
-        // Añade la información a la colección "userInfo"
-        addDoc(collection(db, "userInfo"), userInfo)
-          .then(() => {
-            Alert.alert("Account created!");
-            console.log(user);
-            navigation.navigate("Login");
-          })
-          .catch((error) => {
-            console.log(error);
-            console.log("Error adding user information to Firestore");
-            Alert.alert("Error", "Error adding user information to Firestore");
-          });
-      })
-      .catch((error) => {
-        if (error.code === "auth/email-already-in-use") {
-          Alert.alert(
-            "Error",
-            "The email address is already in use. Please use a different email."
-          );
-        } else {
-          console.log(error);
-          Alert.alert("Error", error.message);
-        }
+      // Guardar user ID en el campo 'id' de la colección 'userInfo'
+      const userDocRef = doc(db, 'userInfo', user.uid); // Cambia 'userInfo' si es necesario
+      await setDoc(userDocRef, {
+        id: user.uid, // Añadir el campo 'id' con el ID del usuario
+        name,
+        email,
       });
+
+      Alert.alert("Account created!");
+      console.log(user);
+      navigation.navigate("Login");
+    } catch (error) {
+      if (error.code === "auth/email-already-in-use") {
+        Alert.alert(
+          "Error",
+          "The email address is already in use. Please use a different email."
+        );
+      } else {
+        console.error(error);
+        Alert.alert("Error", error.message);
+      }
+    }
   };
 
   return (
@@ -225,7 +208,7 @@ const SignupScreen = ({ navigation }) => {
             value={confirmPassword}
             onInputChanged={(id, text) => setConfirmPassword(text)}
             secureTextEntry={!showConfirmPassword}
-            passwordValue={password}
+            passwordValue={password} 
           />
           <TouchableOpacity
             onPress={handleToggleConfirmPasswordVisibility}
@@ -240,10 +223,10 @@ const SignupScreen = ({ navigation }) => {
         </View>
 
         <SafeAreaView style={{ marginTop: 72 }}>
-          <WhiteButton
+        <WhiteButton
             title="Sign Up"
             style={styles.btn}
-            onPress={() => handleCreateAccount()}
+            onPress={() => handleCreateAccount()} 
           />
           <View style={styles.bottomContainer}>
             <Text

@@ -1,7 +1,7 @@
 // firebase-config.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'; // Añade los imports necesarios para Firestore
+import { getFirestore, deleteDoc } from 'firebase/firestore'; // Añade deleteDoc al import
 
 const firebaseConfig = {
   apiKey: "AIzaSyC82e-tB5jegLhbOFsjaMRsqKwb6eQE7OI",
@@ -16,4 +16,4 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(); // Inicializa Firestore
 
-export { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, db };
+export { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, db, deleteDoc }; // Exporta también deleteDoc
