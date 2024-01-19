@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  TextInput,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import appConfig from "../constants/appConfig";
@@ -28,6 +27,14 @@ const ResultsScreen = () => {
       }
     };
   }, [sound]);
+
+  const formatDuration = (duration) => {
+    const totalSeconds = Math.floor(duration);
+    const minutes = Math.floor(totalSeconds / 60000);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+  
 
   const handlePlayRecording = async (title, file) => {
     try {
@@ -56,7 +63,6 @@ const ResultsScreen = () => {
   const hideOptionsModal = () => {
     setOptionsModalVisible(false);
   };
-
 
   const handleDeleteRecording = () => {
     dispatch({ type: "DELETE_RECORDING", payload: expandedIndex });
@@ -90,7 +96,9 @@ const ResultsScreen = () => {
               </TouchableOpacity>
             </View>
             <View style={styles.row}>
-              <Text style={styles.durationText}>{recording.duration}</Text>
+              <Text style={styles.durationText}>
+                {formatDuration(recording.duration)}
+              </Text>
             </View>
             {expandedIndex === index && (
               <View style={styles.expandedContent}>
