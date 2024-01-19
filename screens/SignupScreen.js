@@ -15,7 +15,13 @@ import appConfig from "../constants/appConfig";
 import { FontAwesome5 } from "@expo/vector-icons";
 import WhiteButton from "../components/WhiteButton";
 
-import { auth, createUserWithEmailAndPassword } from '../utils/firebase-config'
+import {
+  auth,
+  createUserWithEmailAndPassword,
+  db,
+} from "../utils/firebase-config";
+import { collection, addDoc } from 'firebase/firestore'; // Añade los imports necesarios para Firestore
+
 
 const images = {
   logo: require("../assets/logo.png"),
@@ -37,11 +43,11 @@ const Input = (props) => {
   };
 
   const isValid = () => {
-    if (props.id === 'email') {
+    if (props.id === "email") {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(props.value);
-    } else if (props.id === 'password') {
+    } else if (props.id === "password") {
       return props.value.length >= 6;
-    } else if (props.id === 'confirmPassword') {
+    } else if (props.id === "confirmPassword") {
       return props.value === props.passwordValue && props.value.length > 0;
     }
     return true;
@@ -53,7 +59,8 @@ const Input = (props) => {
         style={[
           styles.inputContainer,
           {
-            borderColor: isFocused && !isValid() ? 'red' : appConfig.COLORS.gray,
+            borderColor:
+              isFocused && !isValid() ? "red" : appConfig.COLORS.gray,
           },
         ]}
       >
@@ -67,20 +74,20 @@ const Input = (props) => {
           placeholderTextColor={
             props.placeholderTextColor || appConfig.COLORS.gray
           }
-          autoCapitalize={props.autoCapitalize || 'none'}
+          autoCapitalize={props.autoCapitalize || "none"}
           secureTextEntry={props.secureTextEntry || false}
         />
       </View>
       {isFocused && !isValid() && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-            {props.id === 'email'
-              ? 'Invalid email address'
-              : props.id === 'password'
-                ? 'Password must be at least 6 characters'
-                : props.id === 'confirmPassword'
-                  ? 'Passwords do not match'
-                  : ''}
+            {props.id === "email"
+              ? "Invalid email address"
+              : props.id === "password"
+              ? "Password must be at least 6 characters"
+              : props.id === "confirmPassword"
+              ? "Passwords do not match"
+              : ""}
           </Text>
         </View>
       )}
@@ -113,9 +120,28 @@ const SignupScreen = ({ navigation }) => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        Alert.alert("Account created!");
-        console.log(user);
-        navigation.navigate("Login");
+
+        // Añadir información a Firestore
+        const userInfo = {
+          name: name,
+          email: email,
+        };
+
+        console.log("userInfo", userInfo);
+
+
+        // Añade la información a la colección "userInfo"
+        addDoc(collection(db, "userInfo"), userInfo)
+          .then(() => {
+            Alert.alert("Account created!");
+            console.log(user);
+            navigation.navigate("Login");
+          })
+          .catch((error) => {
+            console.log(error);
+            console.log("Error adding user information to Firestore");
+            Alert.alert("Error", "Error adding user information to Firestore");
+          });
       })
       .catch((error) => {
         if (error.code === "auth/email-already-in-use") {
@@ -199,7 +225,7 @@ const SignupScreen = ({ navigation }) => {
             value={confirmPassword}
             onInputChanged={(id, text) => setConfirmPassword(text)}
             secureTextEntry={!showConfirmPassword}
-            passwordValue={password} 
+            passwordValue={password}
           />
           <TouchableOpacity
             onPress={handleToggleConfirmPasswordVisibility}
@@ -214,10 +240,10 @@ const SignupScreen = ({ navigation }) => {
         </View>
 
         <SafeAreaView style={{ marginTop: 72 }}>
-        <WhiteButton
+          <WhiteButton
             title="Sign Up"
             style={styles.btn}
-            onPress={() => handleCreateAccount()} 
+            onPress={() => handleCreateAccount()}
           />
           <View style={styles.bottomContainer}>
             <Text
