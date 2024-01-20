@@ -28,11 +28,12 @@ const ResultsScreen = () => {
     };
   }, [sound]);
 
-  const formatDuration = (duration) => {
-    const totalSeconds = Math.floor(duration);
-    const minutes = Math.floor(totalSeconds / 60000);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  const getDurationFormatted = (milliseconds) => {
+    const minutes = milliseconds / 1000 / 60;
+    const seconds = Math.round((minutes - Math.floor(minutes)) * 60);
+    return seconds < 10
+      ? `${Math.floor(minutes)}:0${seconds}`
+      : `${Math.floor(minutes)}:${seconds}`;
   };
   
 
@@ -97,7 +98,7 @@ const ResultsScreen = () => {
             </View>
             <View style={styles.row}>
               <Text style={styles.durationText}>
-                {formatDuration(recording.duration)}
+                {getDurationFormatted(recording.duration)}
               </Text>
             </View>
             {expandedIndex === index && (
