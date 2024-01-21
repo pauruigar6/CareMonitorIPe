@@ -1,4 +1,3 @@
-// HealthProfileScreen.js
 import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
@@ -7,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   View,
-  Alert,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import appConfig from "../constants/appConfig";
@@ -37,6 +35,7 @@ const HealthProfileScreen = ({ navigation }) => {
   const [recording, setRecording] = useState();
   const [recordings, setRecordings] = useState([]);
   const [userId, setUserId] = useState("");
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -48,7 +47,12 @@ const HealthProfileScreen = ({ navigation }) => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (recording) {
+        stopRecording();
+      }
+      unsubscribe();
+    };
   }, []);
 
   const loadUserRecordings = async (userId) => {
@@ -86,7 +90,7 @@ const HealthProfileScreen = ({ navigation }) => {
         const { recording } = await Audio.Recording.createAsync(
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         );
-        setRecording(recording);
+        setRecording({ recording, timerId: setInterval(updateElapsedTime, 1000) });
       }
     } catch (err) {
       console.error("Error al iniciar la grabación", err);
@@ -95,15 +99,16 @@ const HealthProfileScreen = ({ navigation }) => {
 
   const stopRecording = async () => {
     if (recording) {
+      clearInterval(recording.timerId);
       setRecording(undefined);
-      await recording.stopAndUnloadAsync();
-      const { sound, status } = await recording.createNewLoadedSoundAsync();
+      await recording.recording.stopAndUnloadAsync();
+      const { sound, status } = await recording.recording.createNewLoadedSoundAsync();
 
       const newRecording = {
         id: uuidv4(),
         title: `Recording ${recordings.length + 1}`,
         duration: status.durationMillis,
-        file: recording.getURI(),
+        file: recording.recording.getURI(),
       };
 
       setRecordings([...recordings, newRecording]);
@@ -111,10 +116,6 @@ const HealthProfileScreen = ({ navigation }) => {
       try {
         const userInfoRef = doc(db, "userInfo", userId);
         const audioInfoCollectionRef = collection(userInfoRef, "audioInfo");
-
-        // Log para verificar userId y referencia userInfoRef
-        console.log("userId:", userId);
-        console.log("userInfoRef:", userInfoRef);
 
         const audioDocRef = await addDoc(audioInfoCollectionRef, {
           id: newRecording.id,
@@ -124,10 +125,8 @@ const HealthProfileScreen = ({ navigation }) => {
           timestamp: serverTimestamp(),
         });
 
-        // Log para verificar que se ha creado el documento de audio
         console.log("Audio document written with ID: ", audioDocRef.id);
-        
-        // Después de guardar la grabación, vuelve a cargar las grabaciones del usuario
+
         loadUserRecordings(userId);
       } catch (error) {
         console.error("Error adding audio document: ", error);
@@ -135,6 +134,10 @@ const HealthProfileScreen = ({ navigation }) => {
 
       dispatch({ type: "ADD_RECORDING", payload: newRecording });
     }
+  };
+
+  const updateElapsedTime = () => {
+    setElapsedTime((prevTime) => prevTime + 1);
   };
 
   return (
@@ -163,6 +166,11 @@ const HealthProfileScreen = ({ navigation }) => {
                 {recording ? "Stop Recording" : "Start Recording"}
               </Text>
             </TouchableOpacity>
+            {recording && (
+              <Text style={styles.elapsedTimeText}>
+                Elapsed Time: {elapsedTime} seconds
+              </Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -205,6 +213,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: appConfig.COLORS.white,
+  },
+  elapsedTimeText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: appConfig.COLORS.black,
   },
 });
 
