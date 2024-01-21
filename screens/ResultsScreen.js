@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StyleSheet,
-  Modal,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import appConfig from "../constants/appConfig";
@@ -20,7 +19,6 @@ const ResultsScreen = () => {
   const { state, dispatch } = useAudio();
   const [sound, setSound] = useState();
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const [isOptionsModalVisible, setOptionsModalVisible] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -58,29 +56,33 @@ const ResultsScreen = () => {
     setExpandedIndex((prevIndex) => (prevIndex === index ? null : index));
   };
 
-  const showOptionsModal = () => {
-    setOptionsModalVisible(true);
-  };
-
-  const hideOptionsModal = () => {
-    setOptionsModalVisible(false);
-  };
-
   const handleDeleteRecording = async () => {
     try {
       const user = auth.currentUser;
       const userInfoRef = doc(db, 'userInfo', user.uid);
       const audioInfoCollectionRef = collection(userInfoRef, 'audioInfo');
-      const docToDelete = state.recordings[expandedIndex].id;
-      
-      await deleteDoc(doc(audioInfoCollectionRef, docToDelete));
 
-      dispatch({ type: 'DELETE_RECORDING', payload: expandedIndex });
-      hideOptionsModal();
+      if (expandedIndex !== null) {
+        const recordingToDelete = state.recordings[expandedIndex];
+
+        // Encontrar el documento en la colección según el ID del audio
+        const querySnapshot = await getDocs(audioInfoCollectionRef);
+        const audioDoc = querySnapshot.docs.find(doc => doc.id === recordingToDelete.id);
+
+        if (audioDoc) {
+          // Borrar el documento de la colección
+          await deleteDoc(audioDoc.ref);
+
+          // Actualizar el estado local eliminando el audio
+          const updatedRecordings = state.recordings.filter((_, i) => i !== expandedIndex);
+          dispatch({ type: 'SET_RECORDINGS', payload: updatedRecordings });
+        }
+      }
     } catch (error) {
       console.error('Error deleting recording:', error);
     }
   };
+  
 
   const handleClearRecordings = async () => {
     try {
@@ -116,12 +118,6 @@ const ResultsScreen = () => {
           >
             <View style={styles.cardHeader}>
               <Text style={styles.label}>{`Recording ${index + 1}`}</Text>
-              <TouchableOpacity
-                onPress={showOptionsModal}
-                style={styles.optionsButton}
-              >
-                <FontAwesome5 name="ellipsis-h" style={styles.optionsIcon} />
-              </TouchableOpacity>
             </View>
             <View style={styles.row}>
               <Text style={styles.durationText}>
@@ -153,34 +149,6 @@ const ResultsScreen = () => {
             <Text style={styles.clearButtonText}>Clear Recordings</Text>
           </TouchableOpacity>
         )}
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isOptionsModalVisible}
-          onRequestClose={hideOptionsModal}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.optionsModal}>
-              <TouchableOpacity
-                onPress={() => {
-                  hideOptionsModal();
-                }}
-                style={styles.closeModalButton}
-              >
-                <FontAwesome5 name="times" style={styles.closeModalIcon} />
-              </TouchableOpacity>
-              <View style={styles.modalCard}>
-                <TouchableOpacity
-                  onPress={handleDeleteRecording}
-                  style={styles.optionButton}
-                >
-                  <Text style={{ color: "red" }}>Delete Audio</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -248,57 +216,6 @@ const styles = StyleSheet.create({
   },
   expandedContent: {
     alignItems: "center",
-  },
-  optionsButton: {
-    padding: 6,
-    backgroundColor: appConfig.COLORS.modal,
-    borderRadius: 20,
-    width: 25,
-    height: 25,
-  },
-  optionsIcon: {
-    fontSize: 20,
-    color: appConfig.COLORS.black,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  optionsModal: {
-    backgroundColor: appConfig.COLORS.modal,
-    padding: 16,
-    width: appConfig.SIZES.width,
-    flex: 1,
-    marginTop: 660,
-    justifyContent: "flex-end", 
-  },
-  modalCard: {
-    backgroundColor: appConfig.COLORS.white,
-    borderRadius: 10,
-    marginBottom: 14,
-    padding: 16,
-  },
-  closeModalButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    padding: 10,
-  },
-  closeModalIcon: {
-    fontSize: 15,
-    color: appConfig.COLORS.black,
-  },
-  optionButton: {
-    marginTop: 16,
-  },
-  optionsIcon: {
-    fontSize: 12,
-    color: appConfig.COLORS.black,
-  },
-  timestampText: {
-    fontSize: 16,
-    color: appConfig.COLORS.gray,
   },
 });
 

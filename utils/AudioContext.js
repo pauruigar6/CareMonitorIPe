@@ -1,7 +1,7 @@
 // AudioContext.js
 import React, { createContext, useReducer, useContext, useEffect } from "react";
 import { auth, db } from '../utils/firebase-config';
-import { collection, getDocs, where, query, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, where, query } from 'firebase/firestore';
 
 const AudioContext = createContext();
 
@@ -19,11 +19,6 @@ export const AudioProvider = ({ children }) => {
         return { ...state, recordings: [...state.recordings, newRecording] };
       case "CLEAR_ALL_RECORDINGS":
         return { ...state, recordings: [] };
-      case "DELETE_RECORDING":
-        return {
-          ...state,
-          recordings: state.recordings.filter((_, i) => i !== action.payload),
-        };
       default:
         return state;
     }
