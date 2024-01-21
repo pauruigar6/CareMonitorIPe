@@ -1,6 +1,7 @@
+// AudioContext.js
 import React, { createContext, useReducer, useContext, useEffect } from "react";
 import { auth, db } from '../utils/firebase-config';
-import { collection, getDocs, where, query } from 'firebase/firestore';
+import { collection, getDocs, where, query, deleteDoc } from 'firebase/firestore';
 
 const AudioContext = createContext();
 
@@ -16,7 +17,7 @@ export const AudioProvider = ({ children }) => {
       case "ADD_RECORDING":
         const newRecording = { ...action.payload, timestamp: Date.now() };
         return { ...state, recordings: [...state.recordings, newRecording] };
-      case "CLEAR_RECORDINGS":
+      case "CLEAR_ALL_RECORDINGS":
         return { ...state, recordings: [] };
       case "DELETE_RECORDING":
         return {
@@ -33,11 +34,9 @@ export const AudioProvider = ({ children }) => {
   useEffect(() => {
     const fetchUserRecordings = async () => {
       try {
-        // Obtén el usuario actual desde Firebase Authentication
         const user = auth.currentUser;
 
         if (user) {
-          // Cambia 'audioInfo' y 'userIdField' según la estructura de tu base de datos
           const q = query(collection(db, 'audioInfo'), where('userIdField', '==', user.uid));
           const querySnapshot = await getDocs(q);
 
@@ -49,7 +48,7 @@ export const AudioProvider = ({ children }) => {
           dispatch({ type: 'SET_RECORDINGS', payload: userRecordings });
         }
       } catch (error) {
-        console.error('Error al obtener las grabaciones del usuario:', error);
+        console.error('Error fetching user recordings:', error);
       }
     };
 
@@ -66,7 +65,7 @@ export const AudioProvider = ({ children }) => {
 export const useAudio = () => {
   const context = useContext(AudioContext);
   if (!context) {
-    throw new Error("useAudio debe ser utilizado dentro de un AudioProvider");
+    throw new Error("useAudio must be used within an AudioProvider");
   }
   return context;
 };

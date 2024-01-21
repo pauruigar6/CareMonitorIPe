@@ -13,6 +13,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import appConfig from "../constants/appConfig";
 import { useAudio } from "../utils/AudioContext";
 import { Audio } from "expo-av";
+import { getDocs, deleteDoc, doc, collection } from 'firebase/firestore';
+import { auth, db } from '../utils/firebase-config'
 
 const ResultsScreen = () => {
   const { state, dispatch } = useAudio();
@@ -35,7 +37,6 @@ const ResultsScreen = () => {
       ? `${Math.floor(minutes)}:0${seconds}`
       : `${Math.floor(minutes)}:${seconds}`;
   };
-  
 
   const handlePlayRecording = async (title, file) => {
     try {
@@ -49,7 +50,7 @@ const ResultsScreen = () => {
       );
       setSound(newSound);
     } catch (error) {
-      console.error("Error al reproducir el audio", error);
+      console.error("Error playing audio", error);
     }
   };
 
@@ -65,14 +66,40 @@ const ResultsScreen = () => {
     setOptionsModalVisible(false);
   };
 
-  const handleDeleteRecording = () => {
-    dispatch({ type: "DELETE_RECORDING", payload: expandedIndex });
-    hideOptionsModal();
+  const handleDeleteRecording = async () => {
+    try {
+      const user = auth.currentUser;
+      const userInfoRef = doc(db, 'userInfo', user.uid);
+      const audioInfoCollectionRef = collection(userInfoRef, 'audioInfo');
+      const docToDelete = state.recordings[expandedIndex].id;
+      
+      await deleteDoc(doc(audioInfoCollectionRef, docToDelete));
+
+      dispatch({ type: 'DELETE_RECORDING', payload: expandedIndex });
+      hideOptionsModal();
+    } catch (error) {
+      console.error('Error deleting recording:', error);
+    }
   };
 
-  const handleClearRecordings = () => {
-    dispatch({ type: "CLEAR_RECORDINGS" });
-    setExpandedIndex(null);
+  const handleClearRecordings = async () => {
+    try {
+      const user = auth.currentUser;
+      const userInfoRef = doc(db, 'userInfo', user.uid);
+      const audioInfoCollectionRef = collection(userInfoRef, 'audioInfo');
+      
+      const querySnapshot = await getDocs(audioInfoCollectionRef);
+
+      const deletePromises = querySnapshot.docs.map((doc) =>
+        deleteDoc(doc.ref)
+      );
+      await Promise.all(deletePromises);
+
+      dispatch({ type: 'CLEAR_ALL_RECORDINGS' });
+      setExpandedIndex(null);
+    } catch (error) {
+      console.error('Error clearing recordings:', error);
+    }
   };
 
   return (
