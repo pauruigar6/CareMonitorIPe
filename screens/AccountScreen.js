@@ -1,12 +1,13 @@
+// AccountScreen.js
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import appConfig from "../constants/appConfig";
 
-import { auth, db } from "../utils/firebase-config";
+import { db } from "../utils/firebase-config";
 import { collection, getDocs } from 'firebase/firestore';
 
-const AccountScreen = ({ navigation }) => {
+const AccountScreen = () => {
   const [userData, setUserData] = useState({
     name: "",
     email: "",
@@ -28,16 +29,6 @@ const AccountScreen = ({ navigation }) => {
 
     fetchData();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      // Cerrar sesión
-      await auth.signOut();
-      navigation.replace("Login"); // Redirige a la pantalla de inicio de sesión
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
 
   return (
     <SafeAreaView
@@ -68,10 +59,6 @@ const AccountScreen = ({ navigation }) => {
             <Text style={styles.value}>{userData.email}</Text>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -100,17 +87,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: appConfig.COLORS.primary,
     marginBottom: 10,
-  },
-  logoutButton: {
-    backgroundColor: appConfig.COLORS.primary,
-    borderRadius: 8,
-    padding: 10,
-    alignSelf: "center",
-    marginTop: 60,
-  },
-  logoutText: {
-    color: appConfig.COLORS.white,
-    fontSize: 16,
   },
 });
 
