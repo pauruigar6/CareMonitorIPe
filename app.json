@@ -21,7 +21,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.pauruizgardon.ip1ecaremonitorxruizg03"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
