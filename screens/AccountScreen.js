@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     alignSelf: "center",
-    marginTop: 20,
+    marginTop: 60,
   },
   logoutText: {
     color: appConfig.COLORS.white,

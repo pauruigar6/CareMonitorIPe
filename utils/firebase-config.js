@@ -1,7 +1,8 @@
-// firebase-config.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, deleteDoc } from 'firebase/firestore'; // Añade deleteDoc al import
+import { getFirestore, deleteDoc } from 'firebase/firestore';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC82e-tB5jegLhbOFsjaMRsqKwb6eQE7OI",
@@ -13,7 +14,9 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
+const auth = initializeAuth(firebaseApp, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
 const db = getFirestore(); // Inicializa Firestore
 
-export { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, db, deleteDoc }; // Exporta también deleteDoc
+export { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, db, deleteDoc };

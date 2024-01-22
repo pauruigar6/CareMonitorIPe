@@ -12,6 +12,8 @@ import AccountScreen from "./screens/AccountScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import ResultsScreen from "./screens/ResultsScreen";
 import SettingsScreen from "./screens/SettingsScreen";
+import HelpSupportScreen from './screens/HelpSupportScreen';
+import TermsAndPoliciesScreen from './screens/TermsAndPoliciesScreen';
 
 const Stack = createStackNavigator();
 
@@ -58,6 +60,16 @@ const App = () => {
         <Stack.Screen
           name="SettingsScreen"
           component={SettingsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HelpSupportScreen"
+          component={HelpSupportScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TermsAndPoliciesScreen"
+          component={TermsAndPoliciesScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
