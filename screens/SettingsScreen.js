@@ -1,14 +1,14 @@
 // SettingsScreen.js
 import React from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import appConfig, { COLORS, SIZES } from '../constants/appConfig';
 import { auth } from '../utils/firebase-config';
 
 const SettingsScreen = ({ navigation }) => {
-    const navigateToScreen = (screenName, params) => {
-      navigation.navigate(screenName, params);
-    };  
+  const navigateToScreen = (screenName, params) => {
+    navigation.navigate(screenName, params);
+  };
 
   const logout = async () => {
     try {
@@ -19,6 +19,30 @@ const SettingsScreen = ({ navigation }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.delete();
+        navigation.replace('Login');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
+  };
+
+  const showDeleteAccountConfirmation = () => {
+    Alert.alert(
+      'Confirmación',
+      '¿Estás seguro que deseas eliminar tu cuenta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Confirmar', onPress: deleteAccount },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const supportItems = [
     { icon: 'help-outline', text: 'Help & Support', screen: 'HelpSupportScreen' },
     { icon: 'info-outline', text: 'Terms and Policies', screen: 'TermsAndPoliciesScreen' },
@@ -26,6 +50,7 @@ const SettingsScreen = ({ navigation }) => {
 
   const actionItems = [
     { icon: 'logout', text: 'Log out', action: logout },
+    { icon: 'delete', text: 'Delete Account', action: showDeleteAccountConfirmation },
   ];
 
   const renderSettingsItem = ({ icon, text, screen, action }) => (
